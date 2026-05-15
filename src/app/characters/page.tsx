@@ -1,7 +1,7 @@
 "use client"
-import { useEffect,useReducer,useState } from "react"
+import { useEffect,useState } from "react"
 import { CharacterResponse } from "../types"
-import { getCharacterByPage } from "../lib/api/characters"
+import { getCharacterByName, getCharacterByPage } from "../lib/api/characters"
 import { useRouter } from "next/navigation"
 
 
@@ -14,13 +14,22 @@ const CharacterPage =()=>{
     const router= useRouter();
     const [miError, setError] = useState<string>("");
 
+    const [search, setSearch] = useState<string>("")
+    const [currentSearch, setCurrentSearch] = useState<string>("")
+
     const fetchCha= async()=>{
         try {
             setloading(true);
-            const data = await getCharacterByPage(page);
+            setError("");
+
+            const data = currentSearch
+                ? await getCharacterByName(currentSearch, page)
+                : await getCharacterByPage(page);
+
             setCha(data);
         } catch (e) {
-            setError("Error al cargar los datos");
+            setCha(null);
+            setError("No se encontraron personajes");
         }finally{
             setloading(false);
         }
@@ -28,20 +37,27 @@ const CharacterPage =()=>{
 
     useEffect(()=>{
         fetchCha(); 
-    },[page])
+    },[page, currentSearch])
+
+    const handleSearch = () => {
+        setPage(1);
+        setCurrentSearch(search.trim());
+    }
 
     if(loading){
         return <h1>LOADING BEBE...</h1>
     }
 
-    if(miError){
-        <h1>{miError}</h1>
-    }
-
     return(
         <>
 
+        <input type="text" placeholder="Buscar personaje..." value={search} onChange={(e) => setSearch(e.target.value)}/>
+        
+        <button onClick={handleSearch}>Buscar</button>
+
         <div>
+            {miError && <h1>{miError}</h1>}
+
             {cha?.results.map((personaje)=>(
                 <div className="Personaje" onClick={()=> router.push(`/character/${personaje.id}`)} key={personaje.id}>
                     
@@ -58,7 +74,6 @@ const CharacterPage =()=>{
 
         </div>
         
-           
         </>
 
     );
