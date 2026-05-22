@@ -3,6 +3,7 @@ import { useEffect,useState } from "react";
 import { Character } from "../../types";
 import { getCharacterById } from "../../lib/api/characters";
 import { useParams, useRouter } from "next/navigation";
+import CharacterCard from "../../components/CharacterCard";
 
 const CharacterIdPage = () =>{
 
@@ -48,12 +49,8 @@ const CharacterIdPage = () =>{
     return(
         <div>
             <button onClick={()=>router.back()}>Volver</button>
-            <h1>{cha.name}</h1>
-            <img src={cha.image}/>
-            <p>{cha.status}</p>
-            <p>{cha.species}</p>
-            <p>{cha.gender}</p>
-
+            
+            <CharacterCard cha={cha} showDetails/>
         </div>
     );
 }

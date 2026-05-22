@@ -1,82 +1,79 @@
 "use client"
-import { useEffect,useState } from "react"
-import { CharacterResponse } from "../types"
-import { getCharacterByName, getCharacterByPage } from "../lib/api/characters"
+import { useEffect, useState } from "react"
+import { getCharacterByName,getCharacterByPage } from "../lib/api/characters"
 import { useRouter } from "next/navigation"
+import { CharacterResponse } from "../types"
+import Pagination from "../components/Pagination"
+import CharacterCard from "../components/CharacterCard"
 
+const fetchCha=()=>{
+    const [cha,setcha]=useState<CharacterResponse|null>(null);
 
-const CharacterPage =()=>{
-    const [cha,setCha]=useState<CharacterResponse | null>(null);
+    const [page,setpage]=useState<number>(1);
+    const [loading,setloading]=useState<boolean>(true);
 
-    const [loading,setloading]= useState<boolean>(true);
-    const[page,setPage]=useState<number>(1);
+    const [error,seterror]=useState<string>("");
+    
+    const [search,setsearch]=useState<string>("");
+    const [currentsearch,setCurrentSearch]=useState<string>("");
 
     const router= useRouter();
-    const [miError, setError] = useState<string>("");
 
-    const [search, setSearch] = useState<string>("")
-    const [currentSearch, setCurrentSearch] = useState<string>("")
-
-    const fetchCha= async()=>{
+    const fcha= async()=>{
         try {
             setloading(true);
-            setError("");
+            seterror("");
 
-            const data = currentSearch
-                ? await getCharacterByName(currentSearch, page)
-                : await getCharacterByPage(page);
+            const data= currentsearch
+              ? await getCharacterByName(currentsearch,page)
+              : await getCharacterByPage(page)
 
-            setCha(data);
+            setcha(data);
         } catch (e) {
-            setCha(null);
-            setError("No se encontraron personajes");
+            setcha(null);
+            seterror("No se han podido encontrar los personajes");
         }finally{
             setloading(false);
         }
     }
 
     useEffect(()=>{
-        fetchCha(); 
-    },[page, currentSearch])
+        fcha();
+    },[page,currentsearch]);
 
-    const handleSearch = () => {
-        setPage(1);
+    const handleSearch = ()=>{
+        setpage(1);
         setCurrentSearch(search.trim());
     }
 
     if(loading){
-        return <h1>LOADING BEBE...</h1>
+        return <h1>Cargando....</h1>
     }
 
     return(
         <>
-
-        <input type="text" placeholder="Buscar personaje..." value={search} onChange={(e) => setSearch(e.target.value)}/>
         
-        <button onClick={handleSearch}>Buscar</button>
+         <input type="text" placeholder="Buscar personaje..." value={search} onChange={(e)=>setsearch(e.target.value)}/>
+         <button onClick={handleSearch}>Buscar</button>
 
-        <div>
-            {miError && <h1>{miError}</h1>}
+         <div>
+            {error && <h1>{error}</h1>}
 
-            {cha?.results.map((personaje)=>(
-                <div className="Personaje" onClick={()=> router.push(`/character/${personaje.id}`)} key={personaje.id}>
-                    
-                    <img className="Foto" src={personaje.image}/>
-                    <h2>{personaje.name}</h2>
-                </div>
+            {cha?.results.map((cha)=>(
+
+                <CharacterCard cha={cha} onClick={()=> router.push(`/character/${cha.id}`)} key={cha.id}/>
             ))}
-        </div>
-        
-        <div>
-            <button disabled={!cha?.info.prev} onClick={()=>setPage(page-1)}>Anterior</button>
-            <h3>Pagina {page}</h3>
-            <button disabled={!cha?.info.next} onClick={()=>setPage(page+1)}>Siguiente</button>
+         </div>
 
-        </div>
-        
+          {cha &&
+          
+             <Pagination page={page} setPage={setpage} prev={cha.info.prev} next={cha.info.next}/>
+
+          }
+          
         </>
 
     );
-}
 
-export default CharacterPage;
+}
+export default fetchCha;
